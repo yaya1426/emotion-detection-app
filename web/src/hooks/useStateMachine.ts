@@ -78,6 +78,14 @@ export function useStateMachine() {
     }, COOLDOWN_MS);
   }, []);
 
+  const markJokeFailed = useCallback(() => {
+    dispatch({ type: "JOKE_FAILED" });
+  }, []);
+
+  const markJokeLanded = useCallback(() => {
+    dispatch({ type: "JOKE_LANDED" });
+  }, []);
+
   const isJokeTimedOut = useCallback(() => {
     if (!state.jokeShownAt) return false;
     return Date.now() - state.jokeShownAt > JOKE_TIMEOUT_MS;
@@ -95,5 +103,7 @@ export function useStateMachine() {
     updatePrediction,
     startCooldown,
     isJokeTimedOut,
+    markJokeFailed,
+    markJokeLanded,
   };
 }

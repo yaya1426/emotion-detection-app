@@ -16,7 +16,7 @@ function nextId() {
 }
 
 async function fetchAIMessage(
-  mode: "joke" | "reaction" | "soothe" | "observe",
+  mode: "joke" | "reaction" | "soothe" | "observe" | "switch_style",
   messages: ChatMessage[]
 ): Promise<{ message: string; type: MessageType }> {
   const conversationHistory = messages.map((m) => ({
@@ -38,7 +38,7 @@ async function fetchAIMessage(
 }
 
 export default function EmotionApp() {
-  const { state, addMessage, updatePrediction, startCooldown, isJokeTimedOut } =
+  const { state, addMessage, updatePrediction, startCooldown, isJokeTimedOut, markJokeFailed, markJokeLanded } =
     useStateMachine();
 
   const fetchingRef = useRef(false);
@@ -50,7 +50,7 @@ export default function EmotionApp() {
   }, [state]);
 
   const triggerAI = useCallback(
-    async (mode: "joke" | "reaction" | "soothe" | "observe", emotionTag?: string) => {
+    async (mode: "joke" | "reaction" | "soothe" | "observe" | "switch_style", emotionTag?: string) => {
       if (fetchingRef.current) return;
       fetchingRef.current = true;
 
@@ -96,15 +96,20 @@ export default function EmotionApp() {
 
     if (current.appState === "idle") {
       if (stable === "Neutral") {
-        triggerAI("joke", "Neutral");
+        const mode = current.failedJokeStreak > 0 && current.failedJokeStreak % 5 === 0
+          ? "switch_style"
+          : "joke";
+        triggerAI(mode, "Neutral");
       }
     } else if (current.appState === "showing_joke") {
       if (stable === "Happy") {
+        markJokeLanded();
         triggerAI("reaction", "Happy").then(() => startCooldown());
       } else if (
         current.jokeShownAt &&
         Date.now() - current.jokeShownAt > 10000
       ) {
+        markJokeFailed();
         triggerAI("soothe", stable ?? "Neutral");
       }
     }

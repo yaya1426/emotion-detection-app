@@ -9,7 +9,7 @@ function getClient(): OpenAI {
   return _client;
 }
 
-export type ChatMode = "joke" | "reaction" | "soothe" | "observe";
+export type ChatMode = "joke" | "reaction" | "soothe" | "observe" | "switch_style";
 
 const SYSTEM_PROMPT = `أنت كوميديان مصري ظريف وقلبه طيب. بتشوف الشخص اللي قدامك وبتحس بمشاعره.
 
@@ -32,6 +32,8 @@ function buildUserPrompt(mode: ChatMode): string {
       return "الشخص ما ضحكش (فضل عادي). قوله كلمة حلوة تريحه وجرب نوع نكت مختلف خالص.";
     case "observe":
       return "قول ملاحظة خفيفة ولطيفة عن إن الشخص شكله بيفكر أو مسترخي. خليها طبيعية.";
+    case "switch_style":
+      return "الشخص ما ضحكش على آخر 5 نكت! واضح إن النوع ده مش بيعجبه. اعترف بكده بشكل خفيف وغير ستايل النكت تماماً -- لو كنت بتقول نكت شعبية جرب قفشات أفلام، لو كنت بتقول نكت كلاسيك جرب مواقف كوميدية من الحياة اليومية. ابدأ بالستايل الجديد على طول.";
   }
 }
 
