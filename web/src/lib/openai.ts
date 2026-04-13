@@ -9,7 +9,12 @@ function getClient(): OpenAI {
   return _client;
 }
 
-export type ChatMode = "joke" | "reaction" | "soothe" | "observe" | "switch_style";
+export type ChatMode =
+  | "joke"
+  | "reaction"
+  | "soothe"
+  | "observe"
+  | "switch_style";
 
 const SYSTEM_PROMPT = `أنت كوميديان مصري ظريف وقلبه طيب. بتشوف الشخص اللي قدامك وبتحس بمشاعره.
 
@@ -44,7 +49,7 @@ export interface ChatResponse {
 
 export async function generateChatMessage(
   mode: ChatMode,
-  conversationHistory: { role: "assistant"; content: string }[]
+  conversationHistory: { role: "assistant"; content: string }[],
 ): Promise<ChatResponse> {
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: SYSTEM_PROMPT },
@@ -53,7 +58,7 @@ export async function generateChatMessage(
   ];
 
   const completion = await getClient().chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-5.4",
     messages,
     max_tokens: 150,
     temperature: 0.9,
