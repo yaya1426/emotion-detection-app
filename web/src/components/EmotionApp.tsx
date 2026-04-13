@@ -9,7 +9,7 @@ import ChatPanel from "./ChatPanel";
 import StatusBar from "./StatusBar";
 import GameEndOverlay from "./GameEndOverlay";
 
-const POLL_INTERVAL_MS = 150;
+const POLL_INTERVAL_MS = 100;
 const HAPPY_BOOST_MS = 10_000;
 
 let messageIdCounter = 0;
