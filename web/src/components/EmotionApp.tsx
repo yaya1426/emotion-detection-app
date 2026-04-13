@@ -2,13 +2,15 @@
 
 import { useCallback, useRef, useEffect } from "react";
 import type { ChatMessage, MessageType, PredictionData } from "@/lib/types";
-import { useStateMachine } from "@/hooks/useStateMachine";
+import { useStateMachine, computeMoodLevel } from "@/hooks/useStateMachine";
 import { useEmotionLoop } from "@/hooks/useEmotionLoop";
 import WebcamFeed from "./WebcamFeed";
 import ChatPanel from "./ChatPanel";
 import StatusBar from "./StatusBar";
+import GameEndOverlay from "./GameEndOverlay";
 
-const POLL_INTERVAL_MS = 300;
+const POLL_INTERVAL_MS = 150;
+const HAPPY_BOOST_MS = 10_000;
 
 let messageIdCounter = 0;
 function nextId() {
@@ -17,7 +19,8 @@ function nextId() {
 
 async function fetchAIMessage(
   mode: "joke" | "reaction" | "soothe" | "observe" | "switch_style",
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  moodLevel: string,
 ): Promise<{ message: string; type: MessageType }> {
   const conversationHistory = messages.map((m) => ({
     role: "assistant" as const,
@@ -27,7 +30,7 @@ async function fetchAIMessage(
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, conversationHistory }),
+    body: JSON.stringify({ mode, conversationHistory, moodLevel }),
   });
 
   if (!res.ok) {
@@ -38,8 +41,15 @@ async function fetchAIMessage(
 }
 
 export default function EmotionApp() {
-  const { state, addMessage, updatePrediction, startCooldown, isJokeTimedOut, markJokeFailed, markJokeLanded } =
-    useStateMachine();
+  const {
+    state,
+    addMessage,
+    updatePrediction,
+    startCooldown,
+    markJokeFailed,
+    markJokeLanded,
+    boostMood,
+  } = useStateMachine();
 
   const fetchingRef = useRef(false);
   const stableRef = useRef<string | null>(null);
@@ -50,13 +60,21 @@ export default function EmotionApp() {
   }, [state]);
 
   const triggerAI = useCallback(
-    async (mode: "joke" | "reaction" | "soothe" | "observe" | "switch_style", emotionTag?: string) => {
+    async (
+      mode: "joke" | "reaction" | "soothe" | "observe" | "switch_style",
+      emotionTag?: string,
+    ) => {
       if (fetchingRef.current) return;
       fetchingRef.current = true;
 
       try {
-        const currentMessages = stateRef.current.messages;
-        const result = await fetchAIMessage(mode, currentMessages);
+        const currentState = stateRef.current;
+        const currentMood = computeMoodLevel(currentState);
+        const result = await fetchAIMessage(
+          mode,
+          currentState.messages,
+          currentMood,
+        );
         const msg: ChatMessage = {
           id: nextId(),
           text: result.message,
@@ -75,7 +93,7 @@ export default function EmotionApp() {
         fetchingRef.current = false;
       }
     },
-    [addMessage, startCooldown]
+    [addMessage, startCooldown],
   );
 
   const handlePredictionResult = useCallback(
@@ -83,22 +101,35 @@ export default function EmotionApp() {
       updatePrediction(prediction, stableEmotion);
       stableRef.current = stableEmotion;
     },
-    [updatePrediction]
+    [updatePrediction],
   );
 
   const { handleFrame } = useEmotionLoop(handlePredictionResult);
+
+  const gameEnd = state.moodScore >= 100 ? "won" : state.moodScore <= 0 ? "critical" : null;
 
   const decisionCheck = useCallback(() => {
     const stable = stableRef.current;
     const current = stateRef.current;
 
+    if (current.moodScore >= 100 || current.moodScore <= 0) return;
+
+    if (
+      stable === "Happy" &&
+      current.happySince &&
+      Date.now() - current.happySince >= HAPPY_BOOST_MS
+    ) {
+      boostMood();
+    }
+
     if (fetchingRef.current) return;
 
     if (current.appState === "idle") {
       if (stable === "Neutral") {
-        const mode = current.failedJokeStreak > 0 && current.failedJokeStreak % 5 === 0
-          ? "switch_style"
-          : "joke";
+        const mode =
+          current.failedJokeStreak > 0 && current.failedJokeStreak % 3 === 0
+            ? "switch_style"
+            : "joke";
         triggerAI(mode, "Neutral");
       }
     } else if (current.appState === "showing_joke") {
@@ -107,13 +138,13 @@ export default function EmotionApp() {
         triggerAI("reaction", "Happy").then(() => startCooldown());
       } else if (
         current.jokeShownAt &&
-        Date.now() - current.jokeShownAt > 10000
+        Date.now() - current.jokeShownAt > 5000
       ) {
         markJokeFailed();
         triggerAI("soothe", stable ?? "Neutral");
       }
     }
-  }, [triggerAI]);
+  }, [triggerAI, boostMood, markJokeFailed, markJokeLanded, startCooldown]);
 
   const onFrameWithDecision = useCallback(
     (blob: Blob) => {
@@ -121,23 +152,29 @@ export default function EmotionApp() {
         decisionCheck();
       });
     },
-    [handleFrame, decisionCheck]
+    [handleFrame, decisionCheck],
   );
 
   return (
     <div className="flex h-full flex-col">
+      {gameEnd && <GameEndOverlay type={gameEnd} />}
+
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 p-3">
           <WebcamFeed
             prediction={state.latestPrediction}
             onFrame={onFrameWithDecision}
             intervalMs={POLL_INTERVAL_MS}
-            enabled={true}
+            enabled={!gameEnd}
           />
         </div>
 
         <div className="w-[500px] flex-shrink-0 border-l border-neutral-800 bg-neutral-900/50">
-          <ChatPanel messages={state.messages} />
+          <ChatPanel
+            messages={state.messages}
+            moodLevel={computeMoodLevel(state)}
+            moodScore={state.moodScore}
+          />
         </div>
       </div>
 

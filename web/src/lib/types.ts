@@ -25,6 +25,8 @@ export interface ChatMessage {
 
 export type AppState = "idle" | "showing_joke" | "cooldown";
 
+export type MoodLevel = "great" | "good" | "meh" | "low" | "needs_help";
+
 export interface EmotionState {
   appState: AppState;
   stableEmotion: string | null;
@@ -32,6 +34,8 @@ export interface EmotionState {
   messages: ChatMessage[];
   jokeShownAt: number | null;
   failedJokeStreak: number;
+  moodScore: number;
+  happySince: number | null;
 }
 
 export type EmotionAction =
@@ -40,4 +44,5 @@ export type EmotionAction =
   | { type: "START_COOLDOWN" }
   | { type: "COOLDOWN_DONE" }
   | { type: "JOKE_FAILED" }
-  | { type: "JOKE_LANDED" };
+  | { type: "JOKE_LANDED" }
+  | { type: "MOOD_BOOST" };

@@ -4,6 +4,7 @@ import { generateChatMessage, type ChatMode } from "@/lib/openai";
 interface ChatRequestBody {
   mode: ChatMode;
   conversationHistory: { role: "assistant"; content: string }[];
+  moodLevel?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -19,7 +20,8 @@ export async function POST(request: NextRequest) {
 
     const result = await generateChatMessage(
       body.mode,
-      body.conversationHistory ?? []
+      body.conversationHistory ?? [],
+      body.moodLevel ?? "good"
     );
 
     return NextResponse.json(result);

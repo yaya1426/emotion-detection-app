@@ -2,11 +2,18 @@
 
 import type { ChatMessage } from "@/lib/types";
 
-const BUBBLE_STYLE = {
+const BLUE_STYLE = {
   bg: "bg-blue-950/60",
   border: "border-blue-800/40",
   badge: "bg-blue-800/50",
   badgeText: "text-blue-300",
+};
+
+const GREEN_STYLE = {
+  bg: "bg-green-950/60",
+  border: "border-green-800/40",
+  badge: "bg-green-800/50",
+  badgeText: "text-green-300",
 };
 
 function formatTime(ts: number): string {
@@ -17,7 +24,7 @@ function formatTime(ts: number): string {
 }
 
 export default function ChatBubble({ message }: { message: ChatMessage }) {
-  const style = BUBBLE_STYLE;
+  const style = message.type === "reaction" ? GREEN_STYLE : BLUE_STYLE;
 
   return (
     <div className={`animate-fade-in rounded-2xl border px-6 py-5 ${style.bg} ${style.border}`}>
