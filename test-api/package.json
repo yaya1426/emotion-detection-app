@@ -1,0 +1,12 @@
+{
+  "name": "emotion-detection-test-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predict": "node predict.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.1"
+  }
+}

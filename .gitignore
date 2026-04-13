@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# build
+build/
+dist/
+
+# env files
+.env
+.env*.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# model weights
+model/models/*.pt
+
+# results
+test-api/results/*.json
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+
+# vercel
+.vercel
