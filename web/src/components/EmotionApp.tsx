@@ -136,7 +136,7 @@ export default function EmotionApp() {
           />
         </div>
 
-        <div className="w-[380px] flex-shrink-0 border-l border-neutral-800 bg-neutral-900/50">
+        <div className="w-[500px] flex-shrink-0 border-l border-neutral-800 bg-neutral-900/50">
           <ChatPanel messages={state.messages} />
         </div>
       </div>

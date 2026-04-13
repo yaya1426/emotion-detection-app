@@ -60,7 +60,7 @@ export async function generateChatMessage(
   const completion = await getClient().chat.completions.create({
     model: "gpt-5.4",
     messages,
-    max_tokens: 150,
+    max_completion_tokens: 150,
     temperature: 0.9,
   });
 
