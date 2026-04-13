@@ -8,9 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from ultralytics import YOLO
 
-MODEL_PATH = os.environ.get(
-    "MODEL_PATH", str(Path(__file__).parent / "models" / "exp-5.pt")
-)
+def _find_model() -> str:
+    models_dir = Path(__file__).parent / "models"
+    pt_files = sorted(models_dir.glob("*.pt"))
+    if pt_files:
+        return str(pt_files[0])
+    return str(models_dir / "model.pt")
+
+MODEL_PATH = os.environ.get("MODEL_PATH", _find_model())
 
 app = FastAPI(title="Emotion Detection Model Server")
 
